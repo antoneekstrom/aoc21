@@ -3,11 +3,15 @@ use std::{fs::read_to_string, str::FromStr};
 fn main() {
     let instructions = get_instructions();
 
-    let part1 = Location::new(0, 0).travel(&instructions);
-    let part2 = AimedLocation::new(0, 0, 0).travel(&instructions);
+    let mut part1 = Location::new(0, 0);
+    let mut part2 = AimedLocation::new(0, 0, 0);
 
-    println!("{}", part1.get_distance() * part1.get_depth());
-    println!("{}", part2.get_distance() * part2.get_depth());
+    let subs: Vec<&mut dyn Submarine> = vec![&mut part1, &mut part2];
+
+    for sub in subs {
+        sub.travel(&instructions);
+        println!("{}", sub.get_result());
+    }
 }
 
 fn get_instructions() -> Vec<Instruction> {
@@ -50,8 +54,15 @@ struct AimedLocation {
 trait Submarine {
     fn get_depth(&self) -> i32;
     fn get_distance(&self) -> i32;
-    fn apply_instruction(&self, ins: &Instruction) -> Self;
-    fn travel(&self, instructions: &Vec<Instruction>) -> Self;
+    fn execute(&mut self, ins: &Instruction);
+
+    fn travel(&mut self, instructions: &Vec<Instruction>) {
+        instructions.iter().for_each(|ins| self.execute(ins))
+    }
+
+    fn get_result(&self) -> i32 {
+        self.get_distance() * self.get_depth()
+    }
 }
 
 impl AimedLocation {
@@ -61,6 +72,15 @@ impl AimedLocation {
 
     pub fn new_from_location(location: Location, aim: i32) -> Self {
         Self { location, aim }
+    }
+
+    fn set_from_location(&mut self, location: Location, aim: i32) {
+        self.location = location;
+        self.aim = aim;
+    }
+
+    fn set(&mut self, depth: i32, distance: i32, aim: i32) {
+        self.set_from_location(Location::new(depth, distance), aim);
     }
 }
 
@@ -73,35 +93,30 @@ impl Submarine for AimedLocation {
         self.location.get_distance()
     }
 
-    fn travel(&self, instructions: &Vec<Instruction>) -> AimedLocation {
-        instructions
-            .iter()
-            .fold(self.clone(), |location, instruction| {
-                location.apply_instruction(instruction)
-            })
-    }
-
-    fn apply_instruction(&self, ins: &Instruction) -> AimedLocation {
+    fn execute(&mut self, ins: &Instruction) {
         let Location { depth, distance } = self.location.clone();
         match ins.direction {
-            Direction::Up => {
-                AimedLocation::new_from_location(self.location.clone(), self.aim - ins.distance)
-            }
+            Direction::Up => self.set_from_location(self.location.clone(), self.aim - ins.distance),
             Direction::Down => {
-                AimedLocation::new_from_location(self.location.clone(), self.aim + ins.distance)
+                self.set_from_location(self.location.clone(), self.aim + ins.distance)
             }
-            Direction::Forward => AimedLocation::new(
+            Direction::Forward => self.set(
                 depth + self.aim * ins.distance,
                 distance + ins.distance,
                 self.aim,
             ),
-        }
+        };
     }
 }
 
 impl Location {
     pub fn new(depth: i32, distance: i32) -> Location {
         Location { depth, distance }
+    }
+
+    fn set(&mut self, depth: i32, distance: i32) {
+        self.depth = depth;
+        self.distance = distance;
     }
 }
 
@@ -114,20 +129,12 @@ impl Submarine for Location {
         self.distance
     }
 
-    fn apply_instruction(&self, ins: &Instruction) -> Location {
+    fn execute(&mut self, ins: &Instruction) {
         match ins.direction {
-            Direction::Up => Location::new(self.depth - ins.distance, self.distance),
-            Direction::Down => Location::new(self.depth + ins.distance, self.distance),
-            Direction::Forward => Location::new(self.depth, self.distance + ins.distance),
-        }
-    }
-
-    fn travel(&self, instructions: &Vec<Instruction>) -> Location {
-        instructions
-            .iter()
-            .fold(self.clone(), |location, instruction| {
-                location.apply_instruction(instruction)
-            })
+            Direction::Up => self.set(self.depth - ins.distance, self.distance),
+            Direction::Down => self.set(self.depth + ins.distance, self.distance),
+            Direction::Forward => self.set(self.depth, self.distance + ins.distance),
+        };
     }
 }
 
