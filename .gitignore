@@ -1,0 +1,7 @@
+target
+out
+build
+node_modules
+*.hi
+*.lo
+*.exe
