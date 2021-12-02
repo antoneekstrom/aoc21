@@ -12,4 +12,4 @@ instance Submarine State where
   apply (Instruction Forward n) (State aim pos depth) = State aim (pos + n) (depth + aim * n)
 
 answer :: IO Int
-answer = result (State 0 0 0) <$> instructions
+answer = result . travel (State 0 0 0) <$> instructions

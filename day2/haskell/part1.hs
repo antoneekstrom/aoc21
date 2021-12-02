@@ -17,10 +17,8 @@ class Submarine a where
   apply :: Instruction -> a -> a
   travel :: a -> [Instruction] -> a
   travel self instructions = foldr apply self (reverse instructions)
-  result :: a -> [Instruction] -> Int
-  result a instructions = depth a' * distance a'
-    where
-      a' = travel a instructions
+  result :: a -> Int
+  result a = depth a * distance a
 
 parse :: String -> Instruction
 parse s =
@@ -46,4 +44,4 @@ instance Submarine Location where
   apply (Instruction Up n) (Location pos depth) = Location pos (depth - n)
 
 answer :: IO Int
-answer = result (Location 0 0) <$> instructions
+answer = result . travel (Location 0 0) <$> instructions
