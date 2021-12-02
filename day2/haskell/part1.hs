@@ -11,6 +11,17 @@ data Direction = Forward | Up | Down
 data Instruction = Instruction Direction Int
   deriving (Show)
 
+class Submarine a where
+  depth :: a -> Int
+  distance :: a -> Int
+  apply :: Instruction -> a -> a
+  travel :: a -> [Instruction] -> a
+  travel self instructions = foldr apply self (reverse instructions)
+  result :: a -> [Instruction] -> Int
+  result a instructions = depth a' * distance a'
+    where
+      a' = travel a instructions
+
 parse :: String -> Instruction
 parse s =
   let d = takeWhile isLetter s
@@ -27,15 +38,12 @@ instructions = map parse <$> input
 data Location = Location Int Int
   deriving (Show)
 
-apply :: Instruction -> Location -> Location
-apply (Instruction Forward n) (Location pos depth) = Location (pos + n) depth
-apply (Instruction Down n) (Location pos depth) = Location pos (depth + n)
-apply (Instruction Up n) (Location pos depth) = Location pos (depth - n)
+instance Submarine Location where
+  depth (Location _ depth) = depth
+  distance (Location distance _) = distance
+  apply (Instruction Forward n) (Location pos depth) = Location (pos + n) depth
+  apply (Instruction Down n) (Location pos depth) = Location pos (depth + n)
+  apply (Instruction Up n) (Location pos depth) = Location pos (depth - n)
 
-travel :: [Instruction] -> Location
-travel = foldr apply (Location 0 0)
-
-answer =
-  do
-    (Location pos depth) <- travel <$> instructions
-    return $ pos * depth
+answer :: IO Int
+answer = result (Location 0 0) <$> instructions
