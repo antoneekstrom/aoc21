@@ -1,5 +1,27 @@
 use std::{fs::read_to_string, str::FromStr};
 
+fn main() {
+    let instructions = get_instructions();
+
+    let part1 = Location::new(0, 0).travel(&instructions);
+    let part2 = AimedLocation::new(0, 0, 0).travel(&instructions);
+
+    println!("{}", part1.get_distance() * part1.get_depth());
+    println!("{}", part2.get_distance() * part2.get_depth());
+}
+
+fn get_instructions() -> Vec<Instruction> {
+    get_input()
+        .lines()
+        .map(&str::parse::<Instruction>)
+        .map(Result::unwrap)
+        .collect::<Vec<_>>()
+}
+
+fn get_input<'a>() -> String {
+    read_to_string("input").expect("Failed to read input")
+}
+
 #[derive(Debug)]
 enum Direction {
     Up,
@@ -143,24 +165,4 @@ impl FromStr for Instruction {
             distance,
         })
     }
-}
-
-fn main() {
-    let instructions = get_input()
-        .lines()
-        .map(&str::parse::<Instruction>)
-        .map(Result::unwrap)
-        .collect::<Vec<_>>();
-
-    // instructions.iter().for_each(|i| println!("{:?}", i));
-
-    let part1 = Location::new(0, 0).travel(&instructions);
-    let part2 = AimedLocation::new(0, 0, 0).travel(&instructions);
-
-    println!("{}", part1.get_distance() * part1.get_depth());
-    println!("{}", part2.get_distance() * part2.get_depth());
-}
-
-fn get_input<'a>() -> String {
-    read_to_string("input").expect("Failed to read input")
 }
